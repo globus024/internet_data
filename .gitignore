@@ -196,6 +196,8 @@ pip-selfcheck.json
 # CMake
 cmake-build-*/
 
+.idea
+
 # Mongo Explorer plugin
 .idea/**/mongoSettings.xml
 
@@ -227,4 +229,3 @@ fabric.properties
 # Android studio 3.1+ serialized cache file
 .idea/caches/build_file_checksums.ser
 
-*.env
