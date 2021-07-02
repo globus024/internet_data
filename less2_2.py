@@ -1,15 +1,13 @@
 # Khankhodjaev Azamat
 # 01.07.2021
-# Необходимо собрать информацию о вакансиях на вводимую должность (используем input или через аргументы получаем должность) с сайтов Superjob(по желанию) и HH(обязательно). Приложение должно анализировать несколько страниц сайта (также вводим через input или аргументы). Получившийся список должен содержать в себе минимум:
-# Наименование вакансии.
-# Предлагаемую зарплату (отдельно минимальную и максимальную).
-# Ссылку на саму вакансию.
-# Сайт, откуда собрана вакансия.
-# По желанию можно добавить ещё параметры вакансии (например, работодателя и расположение). Структура должна быть одинаковая для вакансий с обоих сайтов. Общий результат можно вывести с помощью dataFrame через pandas. Сохраните в json либо csv.
-
+# 1. Развернуть у себя на компьютере/виртуальной машине/хостинге MongoDB и реализовать функцию, записывающую собранные вакансии в созданную БД.
+# 2. Написать функцию, которая производит поиск и выводит на экран вакансии с заработной платой больше введённой суммы.
+# 3. Написать функцию, которая будет добавлять в вашу базу данных только новые вакансии с сайта.
 import time
 import pandas as pd
 from local_parser import ParserAbs
+from hh_model import HHMongoModel
+from pprint import pprint
 class HHParse(ParserAbs):
 
     def __init__(self, start_url, parameter, dir_name, file_name):
@@ -20,6 +18,7 @@ class HHParse(ParserAbs):
         self._data_result = []
         self.dir_name = dir_name
         self.file_name = file_name
+        self.hh_model = HHMongoModel('hh_database', 'hh_colection')
 
     @property
     def template(self):
@@ -55,6 +54,13 @@ class HHParse(ParserAbs):
                     pass
             yield job_data
 
+    def save(self, data):
+        self.hh_model.save(data)
+
+    def find_salary(self, amt, op):
+        return self.hh_model.find_salary(amt, op)
+
+
 
 if __name__=="__main__":
     url = "https://tashkent.hh.uz/search/vacancy"
@@ -71,5 +77,7 @@ if __name__=="__main__":
 
     data = parser.get_data()
     parser.save(data)
-    df = pd.DataFrame(data, columns =['name', 'salary'])
-    print(df)
+
+    pprint(list(parser.find_salary(150000,'$gt')))
+    # df = pd.DataFrame(data, columns =['name', 'salary'])
+    # print(df)
