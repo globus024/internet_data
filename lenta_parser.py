@@ -1,14 +1,13 @@
-import time
-import requests
-import pymongo
-from lxml.html import fromstring, HtmlElement
+# Azamat Khankhodjaev
+# 04.07.2021
+
 from datetime import datetime
 from string import whitespace
-
+from abstarct_parser import AbsParser
 CUSTOM_WHITESPACE = (whitespace + "\xa0").replace(" ", "")
 
 
-class LentaParse:
+class LentaParse(AbsParser):
     date_str_ru = {
         'января': '01',
         'февраля': '02',
@@ -24,25 +23,17 @@ class LentaParse:
         'декабря': '12',
     }
 
-    def __init__(self, start_url, mongo_url):
+    def __init__(self, start_url):
+        super().__init__(start_url)
         self.start_url = start_url
-        client = pymongo.MongoClient(mongo_url)
-        self.db = client["newsdb"]
+
         self.header = {
             "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
 
-    def get_response(self, url, *args, **kwargs):
-        for _ in range(5):
-            response = requests.get(url, *args, **kwargs)
-            if response.status_code == 200:
-                return response
-            time.sleep(1)
-        raise ValueError("URL DIE")
+        self._data_result = []
 
-    def get_xpath(self, url, *args, **kwargs) -> HtmlElement:
-        dom = fromstring(self.get_response(url, headers=self.header, **kwargs).text)
-        return dom
+
 
     @property
     def template(self):
@@ -54,10 +45,6 @@ class LentaParse:
         }
         return data_template
 
-    def run(self):
-        for news in self._parse(self.get_xpath(self.start_url)):
-            print(news)
-            self.save(news)
 
     def _parse(self, xpath_html):
         news_xpath = xpath_html.xpath(
@@ -72,9 +59,7 @@ class LentaParse:
                     pass
             yield news_data
 
-    def save(self, data):
-        collection = self.db["magnit"]
-        collection.insert_one(data)
+
 
     def date_format(self, date):
         date_list = date.split(',')
@@ -89,18 +74,14 @@ class LentaParse:
         year = news_date_list[2]
 
         date_time_str = f'{year}-{month}-{day} {news_time}'
-        date_time_obj = datetime.strptime(date_time_str, '%Y-%m-%d %H:%M')
+        date_time_obj = datetime.strptime(date_time_str, '%Y-%m-%d %H:%M').strftime('%Y-%m-%d %H:%M')
 
         return date_time_obj
 
-    def clear_string(self, s, whitespaces=CUSTOM_WHITESPACE):
-        for space in whitespaces:
-            s = s.replace(space, " ")
-        return s
+
 
 
 if __name__ == "__main__":
     url = "https://lenta.ru/"
-    mongo_url = "mongodb://localhost:27017"
-    parser = LentaParse(url, mongo_url)
+    parser = LentaParse(url)
     parser.run()
