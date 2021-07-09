@@ -30,6 +30,10 @@ if __name__ == '__main__':
     div_novinki = driver.find_element_by_xpath(
         '//div[contains(@data-block-id,"Novinki")]')
 
+    while True:
+        li_tags = div_novinki.find_element_by_xpath('//li[contains(@class,"gallery-list-item")]')
+
+
 
     # mail_model = MailModel('less5','mailru')
     # mail_model.run(res)
