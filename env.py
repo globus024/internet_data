@@ -3,5 +3,5 @@ from dotenv import dotenv_values
 config = dotenv_values(".env")
 
 
-USERNAME = config['USERNAME']
+EMAIL = config['EMAIL']
 PASSWORD = config['PASSWORD']
