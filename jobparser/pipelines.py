@@ -8,7 +8,8 @@
 
 import re
 import pymongo
-
+from string import whitespace
+CUSTOM_WHITESPACE = (whitespace + "\xa0").replace(" ", "")
 
 class JobparserPipeline:
     def __init__(self):
@@ -17,6 +18,10 @@ class JobparserPipeline:
         self.db = self.client['less6']
 
     def process_item(self, item, spider):
+
+        if spider.name not in ['hhuz', 'superjob_ru']:
+            return item
+
         loc_dict = dict(item)
 
         if spider.name == "hhuz":
@@ -26,7 +31,7 @@ class JobparserPipeline:
             loc_dict['salary_min'], loc_dict['salary_max'], loc_dict['currency'] = self.salary_parse_superjob(
                 loc_dict['salary'])
         del loc_dict['salary']
-        print(loc_dict)
+
         self.save(self.db[spider.name], loc_dict)
         return item
 
@@ -102,5 +107,95 @@ class JobparserPipeline:
         filter = {}
         for key in data:
             filter[key] = {'$eq': data[key]}
+        update_data['$set'] = data
+        collection.update_one(filter, update_data, upsert=True)
+
+
+class JobparserBookPipeline:
+    def __init__(self):
+        conn_dsn = f'mongodb://localhost:27017'
+        self.client = pymongo.MongoClient(conn_dsn)
+        self.db = self.client['less6']
+
+    def process_item(self, item, spider):
+        if spider.name not in ['labirint_ru', 'book24_ru']:
+            return item
+
+        loc_dict = dict(item)
+
+        if spider.name in "labirint_ru":
+            loc_dict['main_salary'], loc_dict['sale_salary'] = self.salary_parse_labirint(loc_dict['main_salary'],
+                                                                                          loc_dict['sale_salary'])
+        elif spider.name in "book24_ru":
+            loc_dict['book_name'] = self.clear_string(loc_dict['book_name'])
+            loc_dict['author'] = self.clear_string(loc_dict['author'])
+            loc_dict['main_salary'], loc_dict['sale_salary'] = self.salary_parse_book24(loc_dict['main_salary'],
+                                                                                        loc_dict['sale_salary'])
+
+        loc_dict['rating'] = self.rating_formats(loc_dict['rating'])
+
+        self.save(self.db[spider.name], loc_dict)
+        return item
+
+    def salary_parse_labirint(self, main_salary, sale_salary):
+        try:
+            main_salary = float(main_salary)
+        except ValueError:
+            main_salary = None
+        except TypeError:
+            main_salary = None
+
+        try:
+            sale_salary = float(sale_salary)
+        except ValueError:
+            sale_salary = None
+        except TypeError:
+            sale_salary = None
+        return main_salary, sale_salary
+
+    def salary_parse_book24(self, main_salary, sale_salary):
+        if main_salary:
+            main_salary = re.sub('\D+', '', main_salary)
+            main_salary = main_salary.replace("₽", "").replace(" ", "")
+        if sale_salary:
+            sale_salary = re.sub('\D+', '', sale_salary)
+            sale_salary = sale_salary.replace("₽", "").replace(" ", "")
+
+        try:
+            main_salary = float(main_salary)
+        except ValueError:
+            main_salary = None
+        except TypeError:
+            main_salary = None
+
+        try:
+            sale_salary = float(sale_salary)
+        except ValueError:
+            sale_salary = None
+        except TypeError:
+            sale_salary = None
+        return main_salary, sale_salary
+
+    def rating_formats(self, rating):
+        rating = self.clear_string(re.sub('\D+', '', rating))
+        if not rating:
+            rating = 0
+        try:
+            rating = float(rating)
+        except ValueError:
+            rating = 0
+
+        return rating
+
+    def clear_string(self, s, whitespaces=CUSTOM_WHITESPACE):
+        for space in whitespaces:
+            s = s.replace(space, " ")
+        return s
+
+    def save(self, collection, data):
+        update_data = {}
+
+        filter = {}
+        filter['link'] = {'$eq': data['link']}
         update_data['$set'] = data
         collection.update_one(filter, update_data, upsert=True)

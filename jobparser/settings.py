@@ -30,7 +30,7 @@ CONCURRENT_REQUESTS = 16
 # See also autothrottle settings and docs
 DOWNLOAD_DELAY = 0
 # The download delay setting will honor only one of:
-# CONCURRENT_REQUESTS_PER_DOMAIN = 16
+CONCURRENT_REQUESTS_PER_DOMAIN = 16
 # CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)
@@ -67,6 +67,8 @@ COOKIES_ENABLED = True
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
    'jobparser.pipelines.JobparserPipeline': 300,
+   'jobparser.pipelines.JobparserBookPipeline': 301,
+
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)

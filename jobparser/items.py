@@ -15,3 +15,12 @@ class JobparserItem(scrapy.Item):
     currency = scrapy.Field()
     link = scrapy.Field()
     vacancy_company_link = scrapy.Field()
+
+class JobparserBookItem(scrapy.Item):
+    # define the fields for your item here like:
+    book_name = scrapy.Field()
+    author = scrapy.Field()
+    main_salary = scrapy.Field()
+    sale_salary = scrapy.Field()
+    link = scrapy.Field()
+    rating = scrapy.Field()
