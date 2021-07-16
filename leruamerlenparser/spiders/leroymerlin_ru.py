@@ -13,13 +13,13 @@ class LeroymerlinRuSpider(scrapy.Spider):
 
     def parse(self, response:HtmlResponse):
         goods_links = response.xpath("//a[contains(@data-qa,'product-name')]")
-        next_page = response.xpath("//a[contains(@data-qa-pagination-item,'right')]/@href").extract_first()
+        next_page = response.xpath("//a[contains(@data-qa-pagination-item,'right')]")
 
         for link in goods_links:
             yield response.follow(link, callback=self.parse_good)
 
-        # if next_page:
-        #     yield response.follow(next_page, callback=self.parse)
+        if next_page:
+            yield response.follow(next_page, callback=self.parse)
 
     def parse_good(self, response: HtmlResponse):
         loader = ItemLoader(item=LeruamerlenparserItem(), response=response)
